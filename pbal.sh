@@ -3,16 +3,10 @@
 ERR_NEED_TWO_PARAMS="need two params"
 
 function megafon {
-	if [ -z "$1" ] || [ -z "$2" ]; then
-		echo $ERR_NEED_TWO_PARAMS
-		exit 1
-	fi
-	#echo $1 $2
 	tmp_file=/tmp/megafon.session_id
 	curl -s https://moscowsg.megafon.ru/ps/scc/php/check.php?CHANNEL=WWW -d "LOGIN=$1&PASSWORD=$2" > $tmp_file
 	session_id=`sed -n -e "s/.*<SESSION_ID>\(.*\)<\/SESSION_ID>.*/\1/p" $tmp_file`
 	rm $tmp_file
-	#echo $session_id
 	balance=`curl -s https://moscowsg.megafon.ru//SCWWW/ACCOUNT_INFO -d "CHANNEL=WWW&SESSION_ID=$session_id&P_USER_LANG_ID=1" | grep balance | head -n1 | sed -e 's/<[^>]*>//g' | cut -d " " -f 1`
 	echo $balance
 }
@@ -36,10 +30,10 @@ function onlime {
 	echo $balance
 }
 
-if [ -z "$2" ] || [ -z "$3" ]; then
-	echo $ERR_NEED_TWO_PARAMS
-	exit 1
-fi
+#if [ -z "$2" ] || [ -z "$3" ]; then
+#	echo $ERR_NEED_TWO_PARAMS
+#	exit 1
+#fi
 
 case "$1" in
 	megafon)
