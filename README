@@ -2,4 +2,5 @@
 зависимости:
 curl
 sed
+awk
 iconv
