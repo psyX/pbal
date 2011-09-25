@@ -2,3 +2,4 @@
 зависимости:
 curl
 sed
+iconv
