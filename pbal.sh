@@ -2,7 +2,7 @@
 
 #set -x
 
-ERR_NEED_TWO_PARAMS="need two params"
+#ERR_NEED_TWO_PARAMS="need two params"
 USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:5.0.1) Gecko/20100101 Firefox/5.0.1"
 TIME_OUT=120
 ATTEMPTS=5
@@ -30,7 +30,11 @@ function resp {
 
 function err {
 	if [ $SILENT -eq 0 ]; then
-		echo ERROR: $1
+		if [ $VERBOSE -eq 0 ]; then
+			echo "ERROR: $1"
+		else
+			echo "$voperator $vlogin ERROR: $1"
+		fi
 	fi
 	rm -f $tmp_cookie
 	rm -f $tmp_file
@@ -623,30 +627,30 @@ done
 
 p="${@:$OPTIND}"
 
-op=`echo $p | cut -d' ' -f1`
-l=`echo $p | cut -d' ' -f2`
-p=`echo $p | cut -d' ' -f3`
+voperator=`echo $p | cut -d' ' -f1`
+vlogin=`echo $p | cut -d' ' -f2`
+vpassword=`echo $p | cut -d' ' -f3`
 
-if [ -z "$op" ] || [ -z "$l" ] || [ -z "$p" ]; then
+if [ -z "$voperator" ] || [ -z "$vlogin" ] || [ -z "$vpassword" ]; then
 	usage 1
 fi
 
 
-case "$op" in
+case "$voperator" in
 	megafon)
-		megafon $l $p
+		megafon $vlogin $vpassword
 	;;
 	mts)
-		mts $l $p
+		mts $vlogin $vpassword
 	;;
 	beeline)
-		beeline $l $p
+		beeline $vlogin $vpassword
 	;;
 	mgts)
-		mgts $l $p
+		mgts $vlogin $vpassword
 	;;
 	onlime)
-		onlime $l $p
+		onlime $vlogin $vpassword
 	;;
 	*)
 		usage 1
