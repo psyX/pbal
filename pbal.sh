@@ -151,7 +151,7 @@ function megafon {
 
 function mts {
 	tmp_file=/tmp/mts.response
-	tmp_cookies=/tmp/mts.cookies
+	tmp_cookie=/tmp/mts.cookies
 
 # видимо всеже куки не нужны
 #	rv=0
@@ -236,7 +236,6 @@ function mts {
 			-d "username=$1&password=$2" \
 			--referer "https://ihelper.mts.ru/selfcare/logon.aspx" \
 			--user-agent $USER_AGENT > $tmp_file
-
 		rv=$(resp "$tmp_file")
 
 		if [ "$rv" != "200" ]; then
