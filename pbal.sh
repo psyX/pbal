@@ -67,7 +67,7 @@ function megafon {
 	page="https://moscowsg.megafon.ru/ps/scc/php/check.php?CHANNEL=WWW"
 	while [ "$rv" != "200" ]; do
 		curl -i -s -m $TIME_OUT $page \
-			-d "LOGIN=$1&PASSWORD=$2" | iconv -fcp1251 > $tmp_file
+			-d "LOGIN=$1&PASSWORD=$2" | iconv -c -fcp1251 > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -111,7 +111,7 @@ function megafon {
 	while [ "$rv" != "200" ]; do
 		curl -i -s -m $TIME_OUT $page \
 			-d "CHANNEL=WWW&SESSION_ID=$session_id&P_USER_LANG_ID=1" \
-			| iconv -fcp1251 > $tmp_file
+			| iconv -c -fcp1251 > $tmp_file
 	
 		rv=$(resp "$tmp_file")
 
@@ -289,7 +289,7 @@ function beeline {
 		curl -i -s -m $TIME_OUT -L -c $tmp_cookie $page \
 			-d "_stateParam=eCareLocale.currentLocale%3Dru_RU__Russian&_forwardName=null&_resetBreadCrumbs=false&_expandStatus=&userName=$1&password=$2&ecareAction=login" \
 			--referer "https://uslugi.beeline.ru/vip/loginPage.jsp" \
-			--user-agent $USER_AGENT | iconv -fcp1251 > $tmp_file
+			--user-agent $USER_AGENT | iconv -c -fcp1251 > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -465,7 +465,7 @@ function mgts {
 	i=0
 	page="https://lk.mgts.ru"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -c $tmp_cookie $page | iconv -fcp1251 > $tmp_file
+		curl -i -s -m $TIME_OUT -c $tmp_cookie $page | iconv -c -fcp1251 > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -504,7 +504,7 @@ function mgts {
 			-d "txtPIN=$2" \
 			-d "btnEnter=%C2%F5%EE%E4" \
 			--referer "https://lk.mgts.ru/start.aspx" \
-			--user-agent $USER_AGENT | iconv -fcp1251 > $tmp_file
+			--user-agent $USER_AGENT | iconv -c -fcp1251 > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
