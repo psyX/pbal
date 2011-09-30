@@ -563,9 +563,8 @@ function mgts {
 	done
 
 	balance=`grep lblBalance $tmp_file \
-		| sed -e 's/<[^>]*>//g' \
-		| sed -e 's/^[ \t]*//' \
-		| sed s/,/./g`
+        | sed -n -e "s/.*<span.*>\(.*\)<\/span>.*/\1/p" \
+        | sed "s/,/\./g"`
 
 	rm -f $tmp_cookie
 
