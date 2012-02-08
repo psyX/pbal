@@ -443,9 +443,42 @@ function onlime {
 		err "$errmsg"
 	fi
 
-	balance=`sed -n -e "s/.*<big>\(.*\)<\/big>.*/\1/p" $tmp_file \
-		| grep -v strong \
-		| head -n1`
+    rv=0
+    i=0
+    page="https://my.onlime.ru/json/cabinet/"
+    while [ "$rv" != "200" ]; do
+        curl -i -s -m $TIME_OUT -L \
+            -b $tmp_cookie \
+            -c $tmp_cookie \
+            $page > $tmp_file
+
+        rv=$(resp "$tmp_file")
+
+        if [ "$rv" != "200" ]; then
+            case "$rv" in
+                "999")
+                    err999
+                    ;;
+                "404")
+                    err404 "$page"
+                    ;;
+                *)
+                sleep $ATTEMPTS_TIME_OUT
+                    let i=i+1
+                    ;;
+            esac
+        fi
+
+        if [ $i -ge $ATTEMPTS ]; then
+            errATT
+        fi
+    done
+
+	#balance=`sed -n -e "s/.*<big>\(.*\)<\/big>.*/\1/p" $tmp_file \
+	#	| grep -v strong \
+	#	| head -n1`
+
+    balance=`sed -n 's/.*\"balance\":\(.*\),\"lock\".*/\1/p' $tmp_file`
 
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
