@@ -469,6 +469,13 @@ function onlime {
             esac
         fi
 
+        if [ "$rv" == "200" ]; then
+            balance=`sed -n 's/.*\"balance\":\(.*\),\"lock\".*/\1/p' $tmp_file`
+            if [ "$balance" == "" ]; then
+                rv=500
+            fi
+        fi
+
         if [ $i -ge $ATTEMPTS ]; then
             errATT
         fi
