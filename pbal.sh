@@ -474,6 +474,7 @@ function onlime {
             balance=`grep -o 'balance":[0-9]*.[0-9]*' $tmp_file | cut -d':' -f2`
             if [ ! -n "$balance" ]; then
                 rv=500
+                let i=i+1
                 #exit 1
             fi
         fi
