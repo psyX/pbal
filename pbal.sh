@@ -463,16 +463,18 @@ function onlime {
                     err404 "$page"
                     ;;
                 *)
-                sleep $ATTEMPTS_TIME_OUT
+                    sleep $ATTEMPTS_TIME_OUT
                     let i=i+1
                     ;;
             esac
         fi
 
         if [ "$rv" == "200" ]; then
-            balance=`sed -n 's/.*\"balance\":\(.*\),\"lock\".*/\1/p' $tmp_file`
-            if [ "$balance" == "" ]; then
+            #balance=`sed -n 's/.*\"balance\":\(.*\),\"lock\".*/\1/p' $tmp_file`
+            balance=`grep -o 'balance":[0-9]*.[0-9]*' $tmp_file | cut -d':' -f2`
+            if [ ! -n "$balance" ]; then
                 rv=500
+                #exit 1
             fi
         fi
 
@@ -485,7 +487,8 @@ function onlime {
 	#	| grep -v strong \
 	#	| head -n1`
 
-    balance=`sed -n 's/.*\"balance\":\(.*\),\"lock\".*/\1/p' $tmp_file`
+    #balance=`sed -n 's/.*\"balance\":\(.*\),\"lock\".*/\1/p' $tmp_file`
+    balance=`grep -o 'balance":[0-9]*.[0-9]*' $tmp_file | cut -d':' -f2`
 
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
