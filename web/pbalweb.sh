@@ -54,7 +54,7 @@ if [ ! -w $db ]; then
     # Create VIEWs
     sqlite3 $db \
         "CREATE VIEW IF NOT EXISTS v_bal_last AS \
-            SELECT O_.opid, O_.dsc, O_.lgn, B_.baldate, B_.bal FROM op O_ \
+            SELECT O_.usrid, O_.opid, O_.dsc, O_.lgn, B_.baldate, B_.bal FROM op O_ \
             JOIN (SELECT opid, MAX(baldate) AS baldate FROM bal GROUP BY opid) BM_ \
                 ON BM_.opid = O_.opid \
             JOIN bal B_ \
@@ -126,7 +126,7 @@ if [ -w $db ]; then
             echo "<li><a href=\"$usrid\">$usrname</a></li>" >> $webdir/index.html
 
             echo "<html><table>" > $webdir/$usrid/index.html
-            sqlite3 $db "SELECT opid, dsc, bal, baldate, lgn FROM v_bal_last" |\
+            sqlite3 $db "SELECT opid, dsc, bal, baldate, lgn FROM v_bal_last WHERE usrid = $usrid" |\
                 while read op; do
                     opid=`echo $op | cut -d'|' -f1`
                     dsc=`echo $op | cut -d'|' -f2`
