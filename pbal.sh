@@ -694,7 +694,7 @@ function mgts {
 	done
 
 	balance=`sed -n -e "s/.*<td\ class=\"right\">\(.*\)<\/td>/\1/p" $tmp_file \
-        | sed "s/,/\./g"`
+        | sed 's/[^0-9,]*//g' | sed "s/,/\./g"`
 
 	rm -f $tmp_cookie
     rm -f $tmp_file
