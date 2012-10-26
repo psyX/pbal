@@ -153,54 +153,12 @@ function mts {
 	tmp_file=/tmp/mts.response
 	tmp_cookie=/tmp/mts.cookies
 
-# видимо всеже куки не нужны
-#	rv=0
-#	i=0
-#	page="https://ip.mts.ru/selfcarepda/security.mvc/logon"	
-#	while [ "$rv" != "200" ]; do
-#
-#		curl -i -s -m $TIME_OUT -L $page \
-#			-c $tmp_cookie \
-#			--referer "https://ihelper.mts.ru/selfcare/logon.aspx" \
-#			--user-agent $USER_AGENT > $tmp_file
-#
-#		rv=$(resp "$tmp_file")
-#
-#		if [ "$rv" != "200" ]; then
-#			case "$rv" in
-#				"999")
-#					err999
-#					;;
-#				"404")
-#					err404 "$page"
-#					;;
-#				*)
-#					sleep $ATTEMPTS_TIME_OUT
-#					let i=i+1
-#					;;
-#			esac
-#		fi
-#
-#		if [ $i -ge $ATTEMPTS ]; then
-#			errATT
-#		fi	
-#	done
-#	
-#	if [ ! -r "$tmp_cookie" ]; then
-#		errCOO "$page"
-#	fi
-#
-#	rm -f $tmp_file
-	
 	rv=0
 	i=0
-	page="https://ip.mts.ru/SELFCAREPDA/Security.mvc/LogOn?returnLink=http%3A%2F%2Fip.mts.ru%3A8085%2FSELFCAREPDA%2FHome.mvc"
+	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -L "$page" \
+		curl -i -s -m $TIME_OUT "$page" \
 			-c $tmp_cookie \
-			-b $tmp_cookie \
-			-d "username=$1&password=$2" \
-			--referer "https://ihelper.mts.ru/selfcare/logon.aspx" \
 			--user-agent $USER_AGENT > $tmp_file
 
 		rv=$(resp "$tmp_file")
@@ -226,15 +184,64 @@ function mts {
 
 	done
 
+    CSRTFoken=`grep CSRTFoken $tmp_file | sed -n -e 's/.*value="\(.*\)".*/\1/p'`
+
+    if [ -z "$CSRTFoken" ]; then
+        err "Can't get CSRTFoken from $page"
+    fi
+
 	rv=0
 	i=0
-	page="https://ip.mts.ru/SELFCAREPDA/Security.mvc/LogOn?returnLink=http%3A%2F%2Fip.mts.ru%3A8085%2FSELFCAREPDA%2FHome.mvc"
+	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
 	while [ "$rv" != "200" ]; do
 		curl -i -s -m $TIME_OUT -L "$page" \
 			-c $tmp_cookie \
 			-b $tmp_cookie \
-			-d "username=$1&password=$2" \
-			--referer "https://ihelper.mts.ru/selfcare/logon.aspx" \
+			-d "CSRTFoken=$CSRTFoken" \
+            -d "IDToken1=$1" \
+            -d "IDToken2=$2" \
+            --data-urlencode "goto=https://lk.ssl.mts.ru/" \
+			--user-agent $USER_AGENT > $tmp_file
+
+		rv=$(resp "$tmp_file")
+
+		if [ "$rv" != "200" ]; then
+			case "$rv" in
+				"999")
+					err999
+					;;
+				"404")
+					err404 "$page"
+					;;
+				*)
+					sleep $ATTEMPTS_TIME_OUT
+					let i=i+1
+					;;
+			esac
+		fi
+
+		if [ $i -ge $ATTEMPTS ]; then
+			errATT
+		fi	
+
+	done
+
+    errmsg=`grep small $tmp_file | sed -n -e 's/.*<small>\(.*\)<\/small>.*/\1/p'`
+    if [ -n "$errmsg" ]; then
+        err "$errmsg"
+    fi
+
+    errmsg=`grep 'label validate="IDToken2"' $tmp_file | sed -n -e 's/.*<label.*>\(.*\)<\/label>.*/\1/p'`
+    if [ -n "$errmsg" ]; then
+        err "$errmsg"
+    fi
+
+	rv=0
+	i=0
+	page="https://login.mts.ru/profile/mobile/get"
+	while [ "$rv" != "200" ]; do
+		curl -i -s -m $TIME_OUT "$page" \
+			-b $tmp_cookie \
 			--user-agent $USER_AGENT > $tmp_file
 		rv=$(resp "$tmp_file")
 
@@ -258,16 +265,7 @@ function mts {
 		fi	
 	done
 	
-	balance=`grep "Баланс" $tmp_file \
-		| sed -n -e "s/.*<strong>\(.*\)<\/strong>.*/\1/p" \
-		| sed -e 's/<[^>]*>//g' \
-		| cut -d " " -f 1`
-
-	ore=`grep operation-results-error $tmp_file | sed -n -e 's/.*<li>\(.*\)<\/li>.*/\1/p'`
-
-	if [ -n "$ore" ]; then
-		err "$ore"
-	fi
+	balance=`sed -n -e 's/.*balance":"\(.*\)","tariff.*/\1/p' $tmp_file`
 
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
@@ -575,7 +573,7 @@ function qiwi {
 	balance=`grep balance $tmp_file \
         | head -n2 \
         | tail -n1 \
-        | sed 's/[^0-9,]*//g' \
+        | sed 's/[^0-9,-]*//g' \
         | sed "s/,/\./g"`
 
 	rm -f $tmp_cookie
@@ -694,7 +692,7 @@ function mgts {
 	done
 
 	balance=`sed -n -e "s/.*<td\ class=\"right\">\(.*\)<\/td>/\1/p" $tmp_file \
-        | sed 's/[^0-9,]*//g' | sed "s/,/\./g"`
+        | sed 's/[^0-9,-]*//g' | sed "s/,/\./g"`
 
 	rm -f $tmp_cookie
     rm -f $tmp_file
