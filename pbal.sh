@@ -276,6 +276,7 @@ function mts {
 	fi
 
 	rm -f $tmp_cookie
+    rm -f $tmp_file
 }
 
 function beeline {
@@ -356,6 +357,10 @@ function beeline {
 			| cut -d " " -f 1 \
 			| sed -e 's/^[ \t]*//' \
 			| sed s/,/./g`
+    
+    if [ -z "$balance" ]; then
+        err "Can't get balance"
+    fi
 
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
@@ -364,6 +369,7 @@ function beeline {
 	fi
 
 	rm -f $tmp_cookie
+    rm -f $tmp_file
 }
 
 function onlime {
@@ -500,6 +506,87 @@ function onlime {
 	rm -f $tmp_cookie
 }
 
+function qiwi {
+    tmp_file=/tmp/qiwi.response
+    tmp_cookie=/tmp/qiwi.cookies
+
+    rv=0
+    i=0
+    page="https://w.qiwi.com/auth/login.action"
+    while [ "$rv" != "200" ]; do
+        curl -i -s -m $TIME_OUT -c $tmp_cookie --get -d "source=MENU" --data-urlencode "login=$1" --data-urlencode "password=$2" $page > $tmp_file
+
+		rv=$(resp "$tmp_file")
+
+		if [ "$rv" != "200" ]; then
+			case "$rv" in
+				"999")
+					err999
+					;;
+				"404")
+					err404 "$page"
+					;;
+				*)
+					sleep $ATTEMPTS_TIME_OUT
+					let i=i+1
+					;;
+			esac
+		fi
+
+		if [ $i -ge $ATTEMPTS ]; then
+			errATT
+		fi	
+	done
+
+	errmsg=`grep -v NORMAL $tmp_file | sed -n -e 's/.*message":"\(.*\)",".*/\1/p'`
+	if [ -n "$errmsg" ]; then
+		err "$errmsg"
+	fi
+	
+	rv=0
+	i=0
+	page="https://w.qiwi.com/user/person/account/list.action"
+	while [ "$rv" != "200" ]; do
+		curl -i -s -m $TIME_OUT -b $tmp_cookie  $page \
+			--referer "https://w.qiwi.com/person/account/main.action" > $tmp_file
+
+		rv=$(resp "$tmp_file")
+
+		if [ "$rv" != "200" ]; then
+			case "$rv" in
+				"999")
+					err999
+					;;
+				"404")
+					err404 "$page"
+					;;
+				*)
+					sleep $ATTEMPTS_TIME_OUT
+					let i=i+1
+					;;
+			esac
+		fi
+
+		if [ $i -ge $ATTEMPTS ]; then
+			errATT
+		fi	
+	done
+
+	balance=`grep balance $tmp_file \
+        | head -n2 \
+        | tail -n1 \
+        | sed 's/[^0-9,]*//g' \
+        | sed "s/,/\./g"`
+
+	rm -f $tmp_cookie
+    rm -f $tmp_file
+
+	if [ $VERBOSE -eq 0 ]; then
+		echo $balance
+	else
+		echo qiwi $1 $balance
+	fi
+}
 
 function mgts {
 	tmp_file=/tmp/mgts.response
@@ -507,9 +594,9 @@ function mgts {
 
 	rv=0
 	i=0
-	page="https://lk.mgts.ru"
+	page="https://ihelper.mgts.ru/CustomerSelfCare2/logon.aspx"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -c $tmp_cookie $page | iconv -c -fcp1251 > $tmp_file
+		curl -k -i -s -m $TIME_OUT -c $tmp_cookie $page > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -540,15 +627,15 @@ function mgts {
 	
 	rv=0
 	i=0
-	page="https://lk.mgts.ru/start.aspx"
+	page="https://ihelper.mgts.ru/CustomerSelfCare2/logon.aspx"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -L -c $tmp_cookie -b $tmp_cookie $page \
+		curl -k -L -i -s -m $TIME_OUT -c $tmp_cookie -b $tmp_cookie $page \
 			--data-urlencode "__VIEWSTATE=$viewstate" \
-			-d "txtPhone=$1" \
-			-d "txtPIN=$2" \
-			-d "btnEnter=%C2%F5%EE%E4" \
-			--referer "https://lk.mgts.ru/start.aspx" \
-			--user-agent $USER_AGENT | iconv -c -fcp1251 > $tmp_file
+			-d "ctl00%24MainContent%24tbPhoneNumber=$1" \
+			-d "ctl00%24MainContent%24tbPassword=$2" \
+			-d "ctl00%24MainContent%24btnEnter=%D0%92%D0%BE%D0%B9%D1%82%D0%B8+%3E" \
+			--referer "$page" \
+			--user-agent $USER_AGENT > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -572,17 +659,17 @@ function mgts {
 		fi	
 	done
 
-	errmsg=`grep pageEnterError $tmp_file | grep lblError | sed -n -e "s/.*<font.*>\(.*\)<\/font>.*/\1/p"`
+	errmsg=`grep "b_error" $tmp_file | grep -v "%CONTENT%" | sed -n -e 's/.*<div\ class="bln">\(.*\)<\/div><div\ class="lbottom">.*/\1/p'`
 	if [ -n "$errmsg" ]; then
 		err "$errmsg"
 	fi
 	
 	rv=0
 	i=0
-	page="https://lk.mgts.ru/CustomerInfo.aspx"
+	page="https://ihelper.mgts.ru/CustomerSelfCare2/account-status.aspx"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -L -c $tmp_cookie -b $tmp_cookie $page \
-			--referer "https://lk.mgts.ru/start.aspx" > $tmp_file
+		curl -k -i -s -m $TIME_OUT -c $tmp_cookie -b $tmp_cookie $page \
+			--referer "https://ihelper.mgts.ru/CustomerSelfCare2/logon.aspx" > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -606,11 +693,11 @@ function mgts {
 		fi	
 	done
 
-	balance=`grep lblBalance $tmp_file \
-        | sed -n -e "s/.*<span.*>\(.*\)<\/span>.*/\1/p" \
+	balance=`sed -n -e "s/.*<td\ class=\"right\">\(.*\)<\/td>/\1/p" $tmp_file \
         | sed "s/,/\./g"`
 
 	rm -f $tmp_cookie
+    rm -f $tmp_file
 
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
@@ -693,6 +780,9 @@ case "$voperator" in
 	;;
 	onlime)
 		onlime $vlogin $vpassword
+	;;
+	qiwi)
+		qiwi $vlogin $vpassword
 	;;
 	*)
 		usage 1
