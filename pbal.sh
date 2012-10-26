@@ -705,7 +705,7 @@ function mgts {
 }
 
 function usage {
-	echo "usage: $0 [-t{sec}] [-a{attempts}] [-T{sec_attempts}] [-s] [-v] [-h] {megafon|mts|beeline|mgts|onlime} {login} {password}"
+	echo "usage: $0 [-t{sec}] [-a{attempts}] [-T{sec_attempts}] [-s] [-v] [-h] {megafon|mts|beeline|mgts|onlime} {login} [password]"
 	echo "	-t Timeout for connections, default $TIME_OUT sec"
 	echo "	-a Attempts of conections, default $ATTEMPTS"
 	echo "	-T Sleep between attempts, default $ATTEMPTS_TIME_OUT"
@@ -758,10 +758,15 @@ voperator=`echo $p | cut -d' ' -f1`
 vlogin=`echo $p | cut -d' ' -f2`
 vpassword=`echo $p | cut -d' ' -f3`
 
-if [ -z "$voperator" ] || [ -z "$vlogin" ] || [ -z "$vpassword" ]; then
+if [ -z "$voperator" ] || [ -z "$vlogin" ] ; then
 	usage 1
 fi
 
+if [ -z "$vpassword" ] ; then
+    stty -echo
+    read -p "Password: " vpassword; echo
+    stty echo
+fi
 
 case "$voperator" in
 	megafon)
