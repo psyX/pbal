@@ -665,7 +665,7 @@ function mgts {
 	
 	rv=0
 	i=0
-	page="https://ihelper.mgts.ru/CustomerSelfCare2/account-status.aspx"
+	page="https://ihelper.mgts.ru/CustomerSelfCare2/account.aspx"
 	while [ "$rv" != "200" ]; do
 		curl -k -i -s -m $TIME_OUT -c $tmp_cookie -b $tmp_cookie $page \
 			--referer "https://ihelper.mgts.ru/CustomerSelfCare2/logon.aspx" > $tmp_file
@@ -692,7 +692,7 @@ function mgts {
 		fi	
 	done
 
-	balance=`sed -n -e "s/.*<td\ class=\"right\">\(.*\)<\/td>/\1/p" $tmp_file \
+	balance=`sed -n -e 's/.*<strong class="balance-value">\(.*\)<\/strong><\/strong>.*/\1/p' $tmp_file \
         | sed 's/[^0-9,-]*//g' | sed "s/,/\./g"`
 
 	rm -f $tmp_cookie
