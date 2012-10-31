@@ -705,6 +705,86 @@ function mgts {
 	fi
 }
 
+function djuice {
+    tmp_file=/tmp/djuice.response
+    tmp_cookie=/tmp/djuice.cookies
+
+    rv=0
+    i=0
+    page='https://my.djuice.ua/tbmb/login_djuice/show.do'
+    while [ "$rv" != "200" ]; do
+       curl -k -i -s -m $TIME_OUT $page > $tmp_file 
+
+       rv=$(resp "$tmp_file")
+
+       if [ "$rv" != "200" ]; then
+			case "$rv" in
+				"999")
+					err999
+					;;
+				"404")
+					err404 "$page"
+					;;
+				*)
+					sleep $ATTEMPTS_TIME_OUT
+					let i=i+1
+					;;
+			esac
+		fi
+
+		if [ $i -ge $ATTEMPTS ]; then
+			errATT
+		fi	
+	done
+
+    rv=0
+    i=0
+    page='https://my.djuice.ua'`grep "perform.do" $tmp_file | sed -e 's/.*<form.*action="\(.*\)" onsubmit.*/\1/p'`
+    while [ "$rv" != "200" ]; do
+       curl -k -i -s -m $TIME_OUT '$page' \
+       --data-urlencode "user=$1" \
+       -d "password=$2" > $tmp_file 
+
+       rv=$(resp "$tmp_file")
+
+       if [ "$rv" != "200" ]; then
+			case "$rv" in
+				"999")
+					err999
+					;;
+				"404")
+					err404 "$page"
+					;;
+				*)
+					sleep $ATTEMPTS_TIME_OUT
+					let i=i+1
+					;;
+			esac
+		fi
+
+		if [ $i -ge $ATTEMPTS ]; then
+			errATT
+		fi	
+	done
+
+    errmsg=`grep redError $tmp_file | grep '<td' | iconv -f cp1251 | sed -n -e 's/.*<td.*>\(.*\)<\/td>.*/\1/p' | tr '\n' ' '`
+	if [ -n "$errmsg" ]; then
+		err "$errmsg"
+	fi
+	
+    balance=`cat $tmp_file | iconv -f cp1251 | tr '\n' ' ' | sed -n -e 's/.*<td.*><b>\(.*\)<\/b>.*<\/td>.*/\1/p'`
+
+	rm -f $tmp_cookie
+    rm -f $tmp_file
+
+	if [ $VERBOSE -eq 0 ]; then
+		echo $balance
+	else
+		echo mgts $1 $balance
+	fi
+
+}
+
 function usage {
 	echo "usage: $0 [-t{sec}] [-a{attempts}] [-T{sec_attempts}] [-s] [-v] [-h] {megafon|mts|beeline|mgts|onlime|qiwi} {login} [password]"
 	echo "	-t Timeout for connections, default $TIME_OUT sec"
@@ -787,6 +867,9 @@ case "$voperator" in
 	;;
 	qiwi)
 		qiwi $vlogin $vpassword
+	;;
+	djuice)
+		djuice $vlogin $vpassword
 	;;
 	*)
 		usage 1
