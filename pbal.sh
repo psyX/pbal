@@ -157,7 +157,7 @@ function mts {
 	i=0
 	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT "$page" \
+		curl -i -L -s -m $TIME_OUT "$page" \
 			-c $tmp_cookie \
 			--user-agent $USER_AGENT > $tmp_file
 
@@ -194,7 +194,7 @@ function mts {
 	i=0
 	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -L "$page" \
+		curl -i -L -s -m $TIME_OUT -L "$page" \
 			-c $tmp_cookie \
 			-b $tmp_cookie \
 			-d "CSRTFoken=$CSRTFoken" \
@@ -240,7 +240,7 @@ function mts {
 	i=0
 	page="https://login.mts.ru/profile/mobile/get"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT "$page" \
+		curl -i -L -s -m $TIME_OUT "$page" \
 			-b $tmp_cookie \
 			--user-agent $USER_AGENT > $tmp_file
 		rv=$(resp "$tmp_file")
