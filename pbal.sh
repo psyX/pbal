@@ -326,7 +326,7 @@ function beeline {
 	i=0
 	page="https://uslugi.beeline.ru/vip/prepaid/refreshedPrepaidBalance.jsp"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -L -c $tmp_cookie -b $tmp_cookie $page > $tmp_file
+		curl -i -s -m $TIME_OUT -L -c $tmp_cookie -b $tmp_cookie $page | iconv -c -fcp1251 > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
