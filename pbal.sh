@@ -705,6 +705,92 @@ function mgts {
 	fi
 }
 
+function kyivstar {
+    tmp_file=/tmp/kyivstar.response
+    tmp_cookie=/tmp/kyivstar.cookies
+
+    rv=0
+    i=0
+    page='https://my.kyivstar.ua/tbmb/login/show.do'
+    while [ "$rv" != "200" ]; do
+       curl -k -i -s -L -m $TIME_OUT $page | iconv -c -f cp1251 > $tmp_file 
+
+       rv=$(resp "$tmp_file")
+
+       if [ "$rv" != "200" ]; then
+			case "$rv" in
+				"999")
+					err999
+					;;
+				"404")
+					err404 "$page"
+					;;
+				*)
+					sleep $ATTEMPTS_TIME_OUT
+					let i=i+1
+					;;
+			esac
+		fi
+
+		if [ $i -ge $ATTEMPTS ]; then
+			errATT
+		fi	
+	done
+
+    rv=0
+    i=0
+    page='https://my.kyivstar.ua'`grep loginForm $tmp_file | sed -n 's/.*action="\(.*\)" onsubmit=.*/\1/p'`
+    while [ "$rv" != "200" ]; do
+       curl -k -i -s -L -m $TIME_OUT '$page' \
+       --data-urlencode "user=$1" \
+       --data-urlencode "password=$2" \
+       | iconv -c -f cp1251 > $tmp_file 
+
+       rv=$(resp "$tmp_file")
+
+       if [ "$rv" != "200" ]; then
+			case "$rv" in
+				"999")
+					err999
+					;;
+				"404")
+					err404 "$page"
+					;;
+				*)
+					sleep $ATTEMPTS_TIME_OUT
+					let i=i+1
+					;;
+			esac
+		fi
+
+		if [ $i -ge $ATTEMPTS ]; then
+			errATT
+		fi	
+	done
+
+    errmsg=`cat $tmp_file \
+        | grep redError \
+        | grep '<td' \
+        | sed -n -e 's/.*<td.*>\(.*\)<\/td>.*/\1/p' \
+        | tr '\n' ' '`
+	
+    if [ -n "$errmsg" ]; then
+		err "$errmsg"
+	fi
+	
+    balance=`sed -n -e 's/<td style="padding: 0px;"><b>\(.*\)<\/b>/\1/p' $tmp_file | sed 's/,/\./p'`
+
+	rm -f $tmp_cookie
+    rm -f $tmp_file
+
+	if [ $VERBOSE -eq 0 ]; then
+		echo $balance
+	else
+		echo kyivstar $1 $balance
+	fi
+
+}
+
 function djuice {
     tmp_file=/tmp/djuice.response
     tmp_cookie=/tmp/djuice.cookies
@@ -780,7 +866,7 @@ function djuice {
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
 	else
-		echo mgts $1 $balance
+		echo djuice $1 $balance
 	fi
 
 }
