@@ -63,7 +63,7 @@ if [ ! -w $db ]; then
     sqlite3 $db \
         "CREATE VIEW IF NOT EXISTS v_bal_history AS \
             SELECT \
-                opid, date(baldate) AS dd, time(baldate) AS tt, baldate, bal \
+                opid, date(baldate) AS dd, time(baldate) AS tt, baldate, bal, bal_prev-bal AS chg \
             FROM ( \
                 SELECT \
                     B_.opid, B_.baldate, B_.bal, IFNULL(BP_.bal,'xxx') AS bal_prev \
