@@ -63,7 +63,7 @@ if [ ! -w $db ]; then
     sqlite3 $db \
         "CREATE VIEW IF NOT EXISTS v_bal_history AS \
             SELECT \
-                opid, date(baldate) AS dd, time(baldate) AS tt, baldate, bal, bal_prev-bal AS chg \
+                opid, date(baldate) AS dd, time(baldate) AS tt, baldate, bal, ROUND(bal_prev-bal, 2) AS chg \
             FROM ( \
                 SELECT \
                     B_.opid, B_.baldate, B_.bal, IFNULL(BP_.bal,'xxx') AS bal_prev \
@@ -117,7 +117,9 @@ if [ -w $db ]; then
         d=`date +'%F'`
 
     # Generate HTML
-    echo "<html><ul>" > $webdir/index.html
+    echo "<html>" > $webdir/index.html
+    echo '<head><link href="all.css" rel="stylesheet" media="all" /></head>' >> $webdir/index.html
+    echo "<ul>" >> $webdir/index.html
     sqlite3 $db "SELECT usrid, usrname FROM usr" |\
         while read usr; do
             usrid=`echo $usr | cut -d'|' -f1`
@@ -125,7 +127,10 @@ if [ -w $db ]; then
             mkdir -p $webdir/$usrid
             echo "<li><a href=\"$usrid\">$usrname</a></li>" >> $webdir/index.html
 
-            echo "<html><table>" > $webdir/$usrid/index.html
+            echo "<html>" > $webdir/$usrid/index.html
+            echo '<head><link href="../all.css" rel="stylesheet" media="all" /></head>' >> $webdir/$usrid/index.html
+            echo '<a href="../">go back</a>' >> $webdir/$usrid/index.html
+            echo "<table>" >> $webdir/$usrid/index.html
             sqlite3 $db "SELECT opid, dsc, bal, baldate, lgn FROM v_bal_last WHERE usrid = $usrid" |\
                 while read op; do
                     opid=`echo $op | cut -d'|' -f1`
@@ -136,8 +141,12 @@ if [ -w $db ]; then
                     mkdir -p $webdir/$usrid/$opid
                     echo "<tr><td><a href=\"$opid/full.html\" title=\"Full history\">$dsc</a></td><td>$lgn</td><td title=\"As of date: $baldate\">$bal</td></tr>" >> $webdir/$usrid/index.html
 
-                        echo "<html><table>" > $webdir/$usrid/$opid/full.html
-                        sqlite3 -html $db "SELECT baldate, bal FROM v_bal_history WHERE opid = $opid" >> $webdir/$usrid/$opid/full.html
+                        echo "<html>" > $webdir/$usrid/$opid/full.html
+                        echo '<head><link href="../../all.css" rel="stylesheet" media="all" /></head>' >> $webdir/$usrid/$opid/full.html
+                        echo "<strong>$dsc ($lgn)</strong>" >> $webdir/$usrid/$opid/full.html
+                        echo '<a href="../">go back</a>' >> $webdir/$usrid/$opid/full.html
+                        echo "<table>" >> $webdir/$usrid/$opid/full.html
+                        sqlite3 -html $db "SELECT dd, tt, bal, chg FROM v_bal_history WHERE opid = $opid" >> $webdir/$usrid/$opid/full.html
                         echo "</table></html>" >> $webdir/$usrid/$opid/full.html
 
                 done
