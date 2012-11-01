@@ -957,6 +957,9 @@ case "$voperator" in
 	djuice)
 		djuice $vlogin $vpassword
 	;;
+	kyivstar)
+		kyivstar $vlogin $vpassword
+	;;
 	*)
 		usage 1
 
