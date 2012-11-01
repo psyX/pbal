@@ -713,7 +713,7 @@ function kyivstar {
     i=0
     page='https://my.kyivstar.ua/tbmb/login/show.do'
     while [ "$rv" != "200" ]; do
-       curl -k -i -s -L -m $TIME_OUT $page | iconv -c -f cp1251 > $tmp_file 
+       curl -k -i -s -L -m $TIME_OUT "$page" | iconv -c -f cp1251 > $tmp_file 
 
        rv=$(resp "$tmp_file")
 
@@ -741,7 +741,7 @@ function kyivstar {
     i=0
     page='https://my.kyivstar.ua'`grep loginForm $tmp_file | sed -n 's/.*action="\(.*\)" onsubmit=.*/\1/p'`
     while [ "$rv" != "200" ]; do
-       curl -k -i -s -L -m $TIME_OUT '$page' \
+       curl -k -i -s -L -m $TIME_OUT "$page" \
        --data-urlencode "user=$1" \
        --data-urlencode "password=$2" \
        | iconv -c -f cp1251 > $tmp_file 
@@ -775,8 +775,8 @@ function kyivstar {
         | tr '\n' ' '`
 	
     if [ -n "$errmsg" ]; then
-		err "$errmsg"
-	fi
+        err "$errmsg"
+    fi
 	
     balance=`sed -n -e 's/<td style="padding: 0px;"><b>\(.*\)<\/b>/\1/p' $tmp_file | sed 's/,/\./p'`
 
