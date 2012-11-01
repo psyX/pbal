@@ -872,7 +872,7 @@ function djuice {
 }
 
 function usage {
-	echo "usage: $0 [-t{sec}] [-a{attempts}] [-T{sec_attempts}] [-s] [-v] [-h] {megafon|mts|beeline|mgts|onlime|qiwi} {login} [password]"
+	echo "usage: $0 [-t{sec}] [-a{attempts}] [-T{sec_attempts}] [-s] [-v] [-h] {megafon|mts|beeline|mgts|onlime|qiwi|kyivstar} {login} [password]"
 	echo "	-t Timeout for connections, default $TIME_OUT sec"
 	echo "	-a Attempts of conections, default $ATTEMPTS"
 	echo "	-T Sleep between attempts, default $ATTEMPTS_TIME_OUT"
