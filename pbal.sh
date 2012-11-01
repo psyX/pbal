@@ -242,7 +242,7 @@ function mts {
 	while [ "$rv" != "200" ]; do
 		curl -i -L -s -m $TIME_OUT "$page" \
 			-b $tmp_cookie \
-			--user-agent $USER_AGENT > $tmp_file
+			--user-agent $USER_AGENT | iconv -c > $tmp_file
 		rv=$(resp "$tmp_file")
 
 		if [ "$rv" != "200" ]; then
