@@ -172,7 +172,7 @@ if [ -w $db ]; then
             lgn=`echo $line2 | cut -d'|' -f3`
             dsc=`echo $line2 | cut -d'|' -f4`
             bal=`echo $line2 | cut -d'|' -f5`
-            xmpp=`echo $line2 | cut -d'|' -f6`
+            xmpp=`echo $line2 | cut -d'|' -f7`
 
             if [ -n "$xmpp" ]; then
                 echo -ne "$lgn ($opname) less then  $limit\n$dsc\n\n" | /usr/lib/perl5/site_perl/bin/sendxmpp $xmpp
