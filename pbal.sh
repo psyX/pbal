@@ -382,7 +382,7 @@ function onlime {
 	i=0
 	page="https://my.onlime.ru"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -c $tmp_cookie $page > $tmp_file
+		curl -k -i -s -m $TIME_OUT -c $tmp_cookie $page > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -414,10 +414,10 @@ function onlime {
 	i=0
 	page="https://my.onlime.ru/session/login"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT -L \
+		curl -k -i -s -m $TIME_OUT -L \
 			-b $tmp_cookie \
 			-c $tmp_cookie \
-			-d "login_credentials[login]=$1&login_credentials[password]=$2" $page > $tmp_file
+			-d "login_credentials%5Blogin%5D=$1&login_credentials%5Bpassword%5D=$2&commit=%D0%92%D0%BE%D0%B9%D1%82%D0%B8" $page > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -455,7 +455,7 @@ function onlime {
     i=0
     page="https://my.onlime.ru/json/cabinet/"
     while [ "$rv" != "200" ]; do
-        curl -i -s -m $TIME_OUT -L \
+        curl -k -i -s -m $TIME_OUT -L \
             -b $tmp_cookie \
             -c $tmp_cookie \
             $page > $tmp_file
