@@ -197,10 +197,7 @@ function mts {
 		curl -i -L -s -m $TIME_OUT -L "$page" \
 			-c $tmp_cookie \
 			-b $tmp_cookie \
-			-d "CSRTFoken=$CSRTFoken" \
-            -d "IDToken1=$1" \
-            -d "IDToken2=$2" \
-            --data-urlencode "goto=https://lk.ssl.mts.ru/" \
+            -d "IDToken1=$1&IDToken2=$2&goto=https%3A%2F%2Flk.ssl.mts.ru%2F&encoded=false&loginURL=%2Faervice%3Dlk%26gx_charset%3DUTF-8%26goto%3Dhttps%253A%252F%252Flk.ssl.mts.ru%252F&CSRTFoken=$CSRTFoken" \
 			--user-agent $USER_AGENT > $tmp_file
 
 		rv=$(resp "$tmp_file")
@@ -226,23 +223,28 @@ function mts {
 
 	done
 
-    errmsg=`grep small $tmp_file | sed -n -e 's/.*<small>\(.*\)<\/small>.*/\1/p'`
-    if [ -n "$errmsg" ]; then
-        err "$errmsg"
-    fi
+    #errmsg=`grep small $tmp_file | sed -n -e 's/.*<small>\(.*\)<\/small>.*/\1/p'`
+    #if [ -n "$errmsg" ]; then
+    #    err "$errmsg"
+    #fi
 
-    errmsg=`grep 'label validate="IDToken2"' $tmp_file | sed -n -e 's/.*<label.*>\(.*\)<\/label>.*/\1/p'`
+    #errmsg=`grep 'label validate="IDToken2"' $tmp_file | sed -n -e 's/.*<label.*>\(.*\)<\/label>.*/\1/p'`
+    errmsg=`grep "label validate" $tmp_file | sed -n -e 's/.*<label.*>\(.*\)<\/label>/\1/p' | sed -e 's/^[ \t]*//' | tr -d '\n'`
     if [ -n "$errmsg" ]; then
         err "$errmsg"
     fi
 
 	rv=0
 	i=0
-	page="https://login.mts.ru/profile/mobile/get"
+	#page="https://login.mts.ru/profile/mobile/get"
+	#page="https://ihelper.mts.ru/selfcare/Services/get-balance.ashx?update=0"
+    #page="https://ihelper.mts.ru/selfcare/account-status.aspx"
+    page="https://login.mts.ru/profile/header?service=lk&style=2013&update"
 	while [ "$rv" != "200" ]; do
 		curl -i -L -s -m $TIME_OUT "$page" \
+            -c $tmp_cookie \
 			-b $tmp_cookie \
-			--user-agent $USER_AGENT | iconv -c > $tmp_file
+			--user-agent $USER_AGENT > $tmp_file
 		rv=$(resp "$tmp_file")
 
 		if [ "$rv" != "200" ]; then
@@ -265,7 +267,9 @@ function mts {
 		fi	
 	done
 	
-	balance=`sed -n -e 's/.*balance":"\(.*\)","tariff.*/\1/p' $tmp_file`
+	#balance=`sed -n -e 's/.*balance":"\(.*\)","tariff.*/\1/p' $tmp_file`
+	#balance=`sed -n -e 's/.*<strong>\(.*\) .*<\/strong>.*/\1/p' $tmp_file`
+    balance=`grep "Ваш баланс" $tmp_file | sed -n -e 's/.*>\(.*\)<\/a><a.*/\1/p' | cut -d' ' -f1`
 
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
