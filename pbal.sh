@@ -13,7 +13,7 @@ VERBOSE=0
 function resp {
 	if [ -r $1 ]; then
 		status_code=`head -n1 $1 | cut -d' ' -f2`
-		if [ "$status_code" == "302" ]; then # may be it's header like cookie
+		if [ "$status_code" == "302" ] || [ "$status_code" == "301" ]; then # may be it's header like cookie
 			status_code_new=`grep -e "^HTTP" $1 | tail -n1 | cut -d' ' -f2`
 			if [ -n "$status_code_new" ]; then 
 				echo $status_code_new
@@ -60,14 +60,14 @@ function errCOO {
 ##### CUT HERE #####
 
 function megafon {
-	tmp_file=/tmp/megafon.session_id
+	tmp_file=/tmp/megafon.response
 
 	rv=0
 	i=0
-	page="https://moscowsg.megafon.ru/ps/scc/php/check.php?CHANNEL=WWW"
+	page="http://sg.megafon.ru/ps/scc/php/route.php"
 	while [ "$rv" != "200" ]; do
 		curl -i -s -m $TIME_OUT $page \
-			-d "LOGIN=$1&PASSWORD=$2" | iconv -c -fcp1251 > $tmp_file
+            -d "CHANNEL=WWW&ULOGIN=$1" > $tmp_file
 
 		rv=$(resp "$tmp_file")
 
@@ -91,26 +91,18 @@ function megafon {
 		fi	 
 	done
 
-	session_id=`sed -n -e "s/.*<SESSION_ID>\(.*\)<\/SESSION_ID>.*/\1/p" $tmp_file`
-	error_message=`sed -n -e "s/.*<ERROR_MESSAGE>\(.*\)<\/ERROR_MESSAGE>.*/\1/p" $tmp_file`
 
-	if [ -n "$error_message" ]; then
-		err "$error_message"
+    url=`sed -n -e 's/<URL>\(.*\)<\/URL>/\1/p' $tmp_file`
+
+	if [ -z "$url" ]; then
+		err "Can't get service-guide url from $page"
 	fi
 	
-	if [ -z "$session_id" ]; then
-		err "Can't get session_id from $page"
-	fi
-	
-	rm $tmp_file
-
-	tmp_file=/tmp/megafon.balance
 	rv=0
 	i=0
-	page="https://moscowsg.megafon.ru//SCWWW/ACCOUNT_INFO"	
+	page=$url"ROBOTS/SC_TRAY_INFO?X_Username=$1&X_Password=$2"
 	while [ "$rv" != "200" ]; do
-		curl -i -s -m $TIME_OUT $page \
-			-d "CHANNEL=WWW&SESSION_ID=$session_id&P_USER_LANG_ID=1" \
+		curl -L -i -s -m $TIME_OUT $page \
 			| iconv -c -fcp1251 > $tmp_file
 	
 		rv=$(resp "$tmp_file")
@@ -135,12 +127,18 @@ function megafon {
 		fi	 
 	done
 
-	balance=`cat $tmp_file \
-			| grep balance \
-			| head -n1 \
-			| sed -e 's/<[^>]*>//g' \
-			| cut -d " " -f 1`
+    errmsg=`sed -ne 's/<MSEC-COMMAND>\(.*\)<\/MSEC-COMMAND>/\1/p' $tmp_file`
+    if [ -n "$errmsg" ]; then
+        err "$errmsg"
+    fi
+
+	balance=`sed -ne 's/<BALANCE>\(.*\)<\/BALANCE>/\1/p' $tmp_file`
+
 	rm $tmp_file
+
+    if [ -z "$balance" ]; then
+        err "Can't get balance. Unkonown error."
+    fi
 	
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
