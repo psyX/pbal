@@ -54,7 +54,10 @@ if [ ! -w $db ]; then
     # Create VIEWs
     sqlite3 $db \
         "CREATE VIEW IF NOT EXISTS v_bal_last AS \
-            SELECT O_.usrid, O_.opid, O_.dsc, O_.lgn, B_.baldate, B_.bal FROM op O_ \
+            SELECT \
+                O_.usrid, O_.opid, O_.dsc, O_.lgn, B_.baldate, B_.bal, \
+                CAST(julianday(date()) - julianday(date(B_.baldate)) AS int) AS daysago \
+            FROM op O_ \
             JOIN (SELECT opid, MAX(baldate) AS baldate FROM bal GROUP BY opid) BM_ \
                 ON BM_.opid = O_.opid \
             JOIN bal B_ \
@@ -131,15 +134,21 @@ if [ -w $db ]; then
             echo '<head><link href="../all.css" rel="stylesheet" media="all" /></head>' >> $webdir/$usrid/index.html
             echo '<a href="../">go back</a>' >> $webdir/$usrid/index.html
             echo "<table>" >> $webdir/$usrid/index.html
-            sqlite3 $db "SELECT opid, dsc, bal, baldate, lgn FROM v_bal_last WHERE usrid = $usrid" |\
+            sqlite3 $db "SELECT opid, dsc, bal, baldate, lgn, daysago FROM v_bal_last WHERE usrid = $usrid" |\
                 while read op; do
                     opid=`echo $op | cut -d'|' -f1`
                     dsc=`echo $op | cut -d'|' -f2`
                     bal=`echo $op | cut -d'|' -f3`
                     baldate=`echo $op | cut -d'|' -f4`
                     lgn=`echo $op | cut -d'|' -f5`
+                    daysago=`echo $op | cut -d'|' -f6`
+                    if [ $daysago -ge 1 ]; then
+                        bgcolor='bgcolor="red"'
+                    else
+                        bgcolor=''
+                    fi
                     mkdir -p $webdir/$usrid/$opid
-                    echo "<tr><td><a href=\"$opid/full.html\" title=\"Full history\">$dsc</a></td><td>$lgn</td><td title=\"As of date: $baldate\">$bal</td></tr>" >> $webdir/$usrid/index.html
+                    echo "<tr $bgcolor><td><a href=\"$opid/full.html\" title=\"Full history\">$dsc</a></td><td>$lgn</td><td title=\"As of date: $baldate\"><a href=\"$opid/short.html\">$bal</a></td></tr>" >> $webdir/$usrid/index.html
 
                         echo "<html>" > $webdir/$usrid/$opid/full.html
                         echo '<head><link href="../../all.css" rel="stylesheet" media="all" /></head>' >> $webdir/$usrid/$opid/full.html
@@ -148,6 +157,14 @@ if [ -w $db ]; then
                         echo "<table>" >> $webdir/$usrid/$opid/full.html
                         sqlite3 -html $db "SELECT dd, tt, bal, chg FROM v_bal_history WHERE opid = $opid" >> $webdir/$usrid/$opid/full.html
                         echo "</table></html>" >> $webdir/$usrid/$opid/full.html
+
+                        echo "<html>" > $webdir/$usrid/$opid/short.html
+                        echo '<head><link href="../../all.css" rel="stylesheet" media="all" /></head>' >> $webdir/$usrid/$opid/short.html
+                        echo "<strong>$dsc ($lgn)</strong>" >> $webdir/$usrid/$opid/short.html
+                        echo '<a href="../">go back</a>' >> $webdir/$usrid/$opid/short.html
+                        echo "<table>" >> $webdir/$usrid/$opid/short.html
+                        sqlite3 -html $db "SELECT dd, tt, bal, chg FROM v_bal_history WHERE opid = $opid LIMIT 20" >> $webdir/$usrid/$opid/short.html
+                        echo "</table></html>" >> $webdir/$usrid/$opid/short.html
 
                 done
             echo "</table></html>" >> $webdir/$usrid/index.html
