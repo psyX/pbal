@@ -182,10 +182,10 @@ function mts {
 
 	done
 
-    CSRTFoken=`grep CSRTFoken $tmp_file | sed -n -e 's/.*value="\(.*\)".*/\1/p'`
+    CSRFToken=`grep CSRFToken $tmp_file | sed -n -e 's/.*value="\(.*\)".*/\1/p'`
 
-    if [ -z "$CSRTFoken" ]; then
-        err "Can't get CSRTFoken from $page"
+    if [ -z "$CSRFToken" ]; then
+        err "Can't get CSRFToken from $page"
     fi
 
 	rv=0
