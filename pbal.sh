@@ -182,10 +182,10 @@ function mts {
 
 	done
 
-    CSRTFoken=`grep CSRTFoken $tmp_file | sed -n -e 's/.*value="\(.*\)".*/\1/p'`
+    CSRFToken=`grep CSRFToken $tmp_file | sed -n -e 's/.*value="\(.*\)".*/\1/p'`
 
-    if [ -z "$CSRTFoken" ]; then
-        err "Can't get CSRTFoken from $page"
+    if [ -z "$CSRFToken" ]; then
+        err "Can't get CSRFToken from $page"
     fi
 
 	rv=0
@@ -195,7 +195,7 @@ function mts {
 		curl -i -L -s -m $TIME_OUT -L "$page" \
 			-c $tmp_cookie \
 			-b $tmp_cookie \
-            -d "IDToken1=$1&IDToken2=$2&goto=https%3A%2F%2Flk.ssl.mts.ru%2F&encoded=false&loginURL=%2Faervice%3Dlk%26gx_charset%3DUTF-8%26goto%3Dhttps%253A%252F%252Flk.ssl.mts.ru%252F&CSRTFoken=$CSRTFoken" \
+            -d "IDToken1=$1&IDToken2=$2&goto=https%3A%2F%2Flk.ssl.mts.ru%2F&encoded=false&loginURL=%2Faervice%3Dlk%26gx_charset%3DUTF-8%26goto%3Dhttps%253A%252F%252Flk.ssl.mts.ru%252F&CSRFToken=$CSRFToken" \
 			--user-agent $USER_AGENT > $tmp_file
 
 		rv=$(resp "$tmp_file")
