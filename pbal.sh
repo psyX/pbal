@@ -155,7 +155,7 @@ function mts {
 	i=0
 	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
 	while [ "$rv" != "200" ]; do
-		curl -i -L -s -m $TIME_OUT "$page" \
+		curl -k -i -L -s -m $TIME_OUT "$page" \
 			-c $tmp_cookie \
 			--user-agent $USER_AGENT > $tmp_file
 
@@ -192,7 +192,7 @@ function mts {
 	i=0
 	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
 	while [ "$rv" != "200" ]; do
-		curl -i -L -s -m $TIME_OUT -L "$page" \
+		curl -k -i -L -s -m $TIME_OUT -L "$page" \
 			-c $tmp_cookie \
 			-b $tmp_cookie \
             -d "IDToken1=$1&IDToken2=$2&goto=https%3A%2F%2Flk.ssl.mts.ru%2F&encoded=false&loginURL=%2Faervice%3Dlk%26gx_charset%3DUTF-8%26goto%3Dhttps%253A%252F%252Flk.ssl.mts.ru%252F&CSRFToken=$CSRFToken" \
@@ -239,7 +239,7 @@ function mts {
     #page="https://ihelper.mts.ru/selfcare/account-status.aspx"
     page="https://login.mts.ru/profile/header?service=lk&style=2013&update"
 	while [ "$rv" != "200" ]; do
-		curl -i -L -s -m $TIME_OUT "$page" \
+		curl -k -i -L -s -m $TIME_OUT "$page" \
             -c $tmp_cookie \
 			-b $tmp_cookie \
 			--user-agent $USER_AGENT > $tmp_file
