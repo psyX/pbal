@@ -153,7 +153,7 @@ function mts {
 
 	rv=0
 	i=0
-	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
+	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/|head -n1"
 	while [ "$rv" != "200" ]; do
 		curl -k -i -L -s -m $TIME_OUT "$page" \
 			-c $tmp_cookie \
