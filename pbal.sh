@@ -3,7 +3,7 @@
 #set -x
 
 #ERR_NEED_TWO_PARAMS="need two params"
-USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:5.0.1) Gecko/20100101 Firefox/5.0.1"
+USER_AGENT="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/37.0.2062.120 Chrome/37.0.2062.120 Safari/537.36"
 TIME_OUT=120
 ATTEMPTS=5
 ATTEMPTS_TIME_OUT=30
@@ -153,15 +153,14 @@ function mts {
 
 	rv=0
 	i=0
-	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
-	while [ "$rv" != "200" ]; do
+	page="https://login.mts.ru/amserver/UI/Login"
+	while [ "$rv" != "401" ]; do
 		curl -k -i -L -s -m $TIME_OUT "$page" \
 			-c $tmp_cookie \
 			--user-agent $USER_AGENT > $tmp_file
-
 		rv=$(resp "$tmp_file")
 
-		if [ "$rv" != "200" ]; then
+		if [ "$rv" != "401" ]; then
 			case "$rv" in
 				"999")
 					err999
@@ -182,20 +181,23 @@ function mts {
 
 	done
 
-    CSRFToken=`grep CSRFToken $tmp_file | head -n1 | sed -n -e 's/.*value="\(.*\)".*/\1/p'`
 
-    if [ -z "$CSRFToken" ]; then
-        err "Can't get CSRFToken from $page"
+    CSRFSign=`grep -P -e '(?<="csrf.sign" value=")[0-9a-f]+(?=")' -o $tmp_file`
+    CSRFTS=`grep -P -e '(?<="csrf.ts" value=")[0-9]+(?=")' -o $tmp_file`
+
+    if [ -z "$CSRFSign" ]; then
+        err "Can't get CSRFSign from $page"
     fi
 
 	rv=0
 	i=0
-	page="https://login.mts.ru/amserver/UI/Login?service=lk&goto=https://lk.ssl.mts.ru/"
+	page="https://login.mts.ru/amserver/UI/Login"
 	while [ "$rv" != "200" ]; do
 		curl -k -i -L -s -m $TIME_OUT -L "$page" \
 			-c $tmp_cookie \
 			-b $tmp_cookie \
-            -d "IDToken1=$1&IDToken2=$2&goto=https%3A%2F%2Flk.ssl.mts.ru%2F&encoded=false&loginURL=%2Faervice%3Dlk%26gx_charset%3DUTF-8%26goto%3Dhttps%253A%252F%252Flk.ssl.mts.ru%252F&CSRFToken=$CSRFToken" \
+			-d "IDToken2=$2&IDButton=Submit&IDToken1=$1&encoded=false&loginURL=/amserver/UI/Login?gx_charset=UTF-8&csrf.sign=$CSRFSign&csrf.ts=$CSRFTS" \
+			-e "$page" \
 			--user-agent $USER_AGENT > $tmp_file
 
 		rv=$(resp "$tmp_file")
@@ -221,12 +223,7 @@ function mts {
 
 	done
 
-    #errmsg=`grep small $tmp_file | sed -n -e 's/.*<small>\(.*\)<\/small>.*/\1/p'`
-    #if [ -n "$errmsg" ]; then
-    #    err "$errmsg"
-    #fi
 
-    #errmsg=`grep 'label validate="IDToken2"' $tmp_file | sed -n -e 's/.*<label.*>\(.*\)<\/label>.*/\1/p'`
     errmsg=`grep "label validate" $tmp_file | sed -n -e 's/.*<label.*>\(.*\)<\/label>/\1/p' | sed -e 's/^[ \t]*//' | tr -d '\n'`
     if [ -n "$errmsg" ]; then
         err "$errmsg"
@@ -234,13 +231,10 @@ function mts {
 
 	rv=0
 	i=0
-	#page="https://login.mts.ru/profile/mobile/get"
-	#page="https://ihelper.mts.ru/selfcare/Services/get-balance.ashx?update=0"
-    #page="https://ihelper.mts.ru/selfcare/account-status.aspx"
-    page="https://login.mts.ru/profile/header?service=lk&style=2013&update"
+        page="http://login.mts.ru/profile/header"
 	while [ "$rv" != "200" ]; do
 		curl -k -i -L -s -m $TIME_OUT "$page" \
-            -c $tmp_cookie \
+			-c $tmp_cookie \
 			-b $tmp_cookie \
 			--user-agent $USER_AGENT > $tmp_file
 		rv=$(resp "$tmp_file")
@@ -265,9 +259,7 @@ function mts {
 		fi	
 	done
 	
-	#balance=`sed -n -e 's/.*balance":"\(.*\)","tariff.*/\1/p' $tmp_file`
-	#balance=`sed -n -e 's/.*<strong>\(.*\) .*<\/strong>.*/\1/p' $tmp_file`
-    balance=`grep "Ваш баланс" $tmp_file | sed -n -e 's/.*>\(.*\)<\/a><a.*/\1/p' | cut -d' ' -f1`
+	balance=`grep -P "(?<=<b>).+(?=</b>.+руб\.)" -o $tmp_file`
 
 	if [ $VERBOSE -eq 0 ]; then
 		echo $balance
@@ -276,7 +268,7 @@ function mts {
 	fi
 
 	rm -f $tmp_cookie
-    rm -f $tmp_file
+	rm -f $tmp_file
 }
 
 function beeline {
@@ -968,4 +960,3 @@ case "$voperator" in
 esac
 
 exit 0
-
