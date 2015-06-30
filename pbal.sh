@@ -154,13 +154,13 @@ function mts {
 	rv=0
 	i=0
 	page="https://login.mts.ru/amserver/UI/Login"
-	while [ "$rv" != "200" ]; do
+	while [ "$rv" != "401" ]; do
 		curl -k -i -L -s -m $TIME_OUT "$page" \
 			-c $tmp_cookie \
 			--user-agent $USER_AGENT > $tmp_file
 		rv=$(resp "$tmp_file")
 
-		if [ "$rv" != "200" ]; then
+		if [ "$rv" != "401" ]; then
 			case "$rv" in
 				"999")
 					err999
